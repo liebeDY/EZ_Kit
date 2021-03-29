@@ -1,0 +1,312 @@
+
+-- EZ Kit SQL --
+
+    
+-- EZ Kit Admin --
+
+CREATE TABLE ezkit_admin (
+    admin_id VARCHAR2(20) NOT NULL,
+    admin_pw VARCHAR2(20) NOT NULL,
+    admin_nick VARCHAR2(20) NOT NULL,
+    user_type VARCHAR2(20) NOT NULL
+);
+
+
+--- admin 계정 생성 SQL ---
+INSERT INTO ezkit_admin VALUES ('admin', 'admin', 'admin', 'admin');
+
+commit;
+
+
+
+
+-- EZ Kit User --
+
+CREATE TABLE ezkit_user (
+    user_num NUMBER PRIMARY KEY,
+    user_id VARCHAR2(50) UNIQUE,
+    user_pw VARCHAR2(20) NOT NULL,
+    user_name VARCHAR2(20) NOT NULL,
+    user_nick VARCHAR2(50) NOT NULL,
+    user_tel VARCHAR2(20) NOT NULL,
+    user_postcode VARCHAR2(50) NOT NULL,
+    user_addr1 VARCHAR2(255) NOT NULL,
+    user_addr2 VARCHAR2(255) NOT NULL,
+    user_regdate date,
+    user_point NUMBER default 0,
+    user_type VARCHAR2(20) NOT NULL,
+    user_rating VARCHAR(20) DEFAULT 'silver'
+);
+
+CREATE SEQUENCE seq_ezkit_user;
+
+DROP TABLE ezkit_user CASCADE CONSTRAINTS;
+
+-- EZ kit classification --
+
+
+CREATE TABLE ezkit_classification (
+    classification_num NUMBER NOT NULL,
+    classification_name VARCHAR2(50) PRIMARY KEY
+);
+
+
+CREATE SEQUENCE seq_ezkit_classification;
+
+
+insert into ezkit_classification values (seq_ezkit_classification.nextval, '한식');
+insert into ezkit_classification values (seq_ezkit_classification.nextval, '양식');
+insert into ezkit_classification values (seq_ezkit_classification.nextval, '중식');
+insert into ezkit_classification values (seq_ezkit_classification.nextval, '일식');
+insert into ezkit_classification values (seq_ezkit_classification.nextval, '분식');
+
+commit;
+
+
+SELECT * FROM ezkit_classification;
+
+
+
+-- EZ Kit Product --
+
+CREATE TABLE ezkit_product (
+    product_num NUMBER PRIMARY KEY,
+    product_name VARCHAR2(255) NOT NULL,
+    product_price NUMBER NOT NULL,
+    product_quantity NUMBER NOT NULL,
+    product_classification VARCHAR2(50) REFERENCES ezkit_classification(classification_name) ON DELETE CASCADE,
+    product_portion NUMBER NOT NULL,
+    product_time NUMBER NOT NULL,
+    product_level VARCHAR2(20) NOT NULL,
+    product_info VARCHAR2(255) NOT NULL,
+    product_regdate DATE,
+    product_hit NUMBER DEFAULT 0
+);
+
+CREATE SEQUENCE seq_ezkit_product;
+
+ALTER TABLE ezkit_product ADD product_hit NUMBER DEFAULT 0;
+
+SELECT * FROM ezkit_product;
+
+
+
+
+
+
+
+
+
+-- EZ kit Board -- 
+
+CREATE TABLE ezkit_board (
+    board_num NUMBER PRIMARY KEY,
+    board_title VARCHAR(50) NOT NULL,
+    board_content VARCHAR(255) NOT NULL,
+    board_date DATE,
+    board_hits NUMBER DEFAULT 0,
+    board_writer_id VARCHAR2(50) REFERENCES ezkit_user(user_id) ON DELETE CASCADE
+);
+
+CREATE SEQUENCE seq_ezkit_board;
+
+
+
+
+
+
+
+-- EZ kit cart --
+
+CREATE TABLE ezkit_cart(
+    cart_num NUMBER PRIMARY KEY,
+    product_num NUMBER REFERENCES ezkit_product(product_num) ON DELETE CASCADE,
+    product_quantity NUMBER,
+    user_id VARCHAR2(20) REFERENCES ezkit_user(user_id) ON DELETE CASCADE 
+);
+
+
+CREATE SEQUENCE seq_ezkit_cart;
+
+
+
+-- EZ kit notice --
+
+CREATE TABLE ezkit_notice(
+    notice_num NUMBER PRIMARY KEY,
+    notice_title VARCHAR2(50) NOT NULL,
+    notice_content VARCHAR2(255) NOT NULL,
+    notice_date DATE,
+    notice_hits NUMBER DEFAULT 0
+);
+
+CREATE SEQUENCE seq_ezkit_notice;
+
+
+
+-- EZ kit qna --
+
+
+CREATE TABLE ezkit_qna_option(
+    qna_option_num NUMBER NOT NULL UNIQUE,
+    qna_option_name VARCHAR2(50) PRIMARY KEY
+);
+
+CREATE SEQUENCE seq_ezkit_qna_option;
+
+DROP TABLE ezkit_qna_option;
+
+
+---
+
+CREATE TABLE ezkit_qna(
+    qna_num NUMBER PRIMARY KEY,
+    qna_title VARCHAR2(50) NOT NULL,
+    qna_content VARCHAR2(255) NOT NULL,
+    qna_date DATE,
+    qna_hits NUMBER DEFAULT 0,
+    qna_option VARCHAR2(50) REFERENCES ezkit_qna_option(qna_option_name) ON DELETE CASCADE
+);
+
+CREATE SEQUENCE seq_ezkit_qna;
+
+
+CREATE TABLE ezkit_inquiry(
+    inquiry_num NUMBER PRIMARY KEY,
+    inquiry_title VARCHAR2(50) NOT NULL,
+    inquiry_content VARCHAR2(255) NOT NULL,
+    inquiry_reply VARCHAR2(255),
+    inquiry_date DATE,
+    inquiry_result NUMBER DEFAULT 1,
+    user_id VARCHAR2(20) REFERENCES ezkit_user(user_id) ON DELETE CASCADE 
+);
+
+CREATE SEQUENCE seq_ezkit_inquiry;
+
+
+
+
+-- EZkit order --
+drop table ezkit_order;
+
+create table ezkit_order (
+-- 주문번호 : sequence
+order_num number primary key, 
+
+-- 유저id
+user_id varchar2(20) references ezkit_user (user_id) on delete cascade, 
+
+-- 총 수량
+order_total_quantity number not null,
+
+-- 총 결제 금액 : 전체 결제 금액 - 사용한 point 
+order_payment_price number not null,
+
+-- 포인트 적립 : 결제금액의 0.2% user에 적립
+order_save_point number not null,
+
+-- 사용 포인트 : user가 입력한 포인트 금액
+order_used_point number default 0,
+
+-- 주문자 연락처 : 없으면 유저id에서 가져오기
+order_user_tel varchar2(50) not null,
+
+-- 주문자 주소1 : 없으면 유저id에서 가져오기
+order_user_addr1 varchar2(500) not null,
+
+-- 주문자 주소2 : 없으면 유저id에서 가져오기
+order_user_addr2 varchar2(500) not null,
+
+-- 주문자 우편번호 
+order_user_postcode varchar2(10) not null,
+
+-- 결제일
+Payment_date date not null
+
+);
+create sequence seq_ezkit_order;
+
+
+-- EZkit order_product --
+create table ezkit_order_product (
+order_product_num number primary key,
+
+order_num number references ezkit_order(order_num) on delete cascade, 
+
+user_id varchar2(20) references ezkit_user (user_id) on delete cascade, 
+
+product_num number references ezkit_product(product_num) on delete cascade,
+
+product_name varchar2(255) not null,
+
+product_quantity number not null,
+
+product_price number not null,
+
+-- 주문상태
+order_status number default 0 not null,
+
+-- 결제일
+Payment_date date not null,
+
+-- 상품준비일
+Product_preparation_date date,
+
+-- 배송준비일
+Delivery_preparation_date date,
+
+-- 배송중
+Delivery_date date,
+
+-- 배송완료
+Delivery_completed_date date
+);
+
+
+create sequence seq_ezkit_order_product;
+
+
+
+
+
+
+-- 리뷰 --
+
+CREATE TABLE ezkit_review(
+ review_num number primary key,
+ user_type varchar2(50), 
+ user_nick varchar2(50),
+ review_content varchar2(255),
+ product_num number references ezkit_product(product_num) on delete cascade,
+ review_date date
+);
+
+
+CREATE SEQUENCE seq_ezkit_review;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+drop sequence seq_ezkit_admin;
+drop sequence seq_ezkit_board;
+drop sequence seq_ezkit_cart;
+drop sequence seq_ezkit_classification;
+drop sequence seq_ezkit_inquiry;
+drop sequence seq_ezkit_notice;
+drop sequence seq_ezkit_order;
+drop sequence seq_ezkit_order_product;
+drop sequence seq_ezkit_product;
+drop sequence seq_ezkit_qna;
+drop sequence seq_ezkit_qna_option;
+drop sequence seq_ezkit_review;
+drop sequence seq_ezkit_user;

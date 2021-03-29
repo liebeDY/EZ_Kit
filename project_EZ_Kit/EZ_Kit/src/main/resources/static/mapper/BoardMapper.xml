@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<!DOCTYPE mapper 
+   PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+   
+   
+   
+<mapper namespace="com.project.ezkit.board.BoardMapper">
+
+	<resultMap type="com.project.ezkit.board.Board" id="Board">
+		
+		<result property="board_num"		column="board_num"/>
+		<result property="board_title"		column="board_title"/>
+		<result property="board_content"	column="board_content"/>
+		<result property="board_date"		column="board_date"/>
+		<result property="board_hits"		column="board_hits"/>
+		<result property="board_writer_id"	column="board_writer_id"/>
+	
+	</resultMap>
+
+	<!-- insert : 글 작성 -->
+	<insert id="insertBoard" parameterType="com.project.ezkit.board.Board">
+		INSERT INTO ezkit_board VALUES (
+			seq_ezkit_board,
+			#{board_title},
+			#{board_content},
+			#{board_date},
+			#{board_hits},
+			#{board_writer_id}
+		)
+	</insert>
+	
+	<!-- 게시글 전체 검색 : 최신순 -->
+	<select id="selectBoardAll" resultMap="Board">
+		SELECT	*
+		FROM	ezkit_board
+		ORDER BY board_num DESC
+	</select>
+	
+	<!-- 게시글 번호로 검색 : 최신순	 -->
+	<select id="selectBoardByBoardNum" resultMap="Board" parameterType="int">
+		SELECT	*
+		FROM	ezkit_board
+		WHERE	board_num = #{board_num}
+		ORDER BY board_num DESC
+	</select>
+	
+	<!-- 게시글 user_id로 검색 : 최신순 -->
+	<select id="selectBoardByUserId" resultMap="Board" parameterType="String">
+		SELECT	*
+		FROM	ezkit_board
+		WHERE	board_title = #{board_writer_id}
+		ORDER BY board_num DESC
+	</select>	
+	
+	<!-- 게시글 검색어로 검색 : 최신순 -->
+	<select id="selectBoardBySearchKeyword" resultMap="Board" parameterType="String">
+		SELECT	*
+		FROM	ezkit_board
+		WHERE	board_writer_id LIKE '%${search_keyword}%'
+		OR		board_content	LIKE '%${search_keyword}%'
+		ORDER BY board_num DESC
+	</select>	
+
+	<!-- 게시글 수정 -->
+	<update id="updateBoard" parameterType="com.project.ezkit.board.Board">
+		UPDATE
+		FROM	ezkit_board
+		SET		board_title = #{board_title},
+				board_content = #{board_content}
+		WHERE	board_num = #{board_num}		
+	</update>
+	
+   <!-- 조회수 -->
+   <update id="boardHits" parameterType="int"> 
+      UPDATE   	
+      FROM		ezkit_board 
+      SET   	board_hits = board_hits+1 
+      WHERE   	board_num = #{board_num} 
+   </update>
+   
+	<!-- 게시글 삭제 -->
+	<delete id="deleteBoard" parameterType="java.util.Map">
+		DELETE 
+		FROM	ezkit_board
+		WHERE	board_writer_id = #{board_writer_id}
+		AND		board_num = #{board_num}
+	</delete>
+ 
+
+</mapper>
